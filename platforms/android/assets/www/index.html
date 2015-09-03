@@ -1,0 +1,264 @@
+ <!DOCTYPE html>
+  <html>
+    <head>
+      <!--Import materialize.css-->
+      <link type="text/css" rel="stylesheet" href="css/materialize.min.css"  media="screen,projection"/>
+
+      <!--Let browser know website is optimized for mobile-->
+      <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+	  <!-- Improt de los iconos -->
+
+    <link type="text/css" rel="stylesheet" href="css/core.css">
+	<style type="text/css">
+		#footer {
+		    position: fixed;
+		    z-index: 100; 
+		    bottom: 0; 
+		    left: 0;
+		    width: 100%;
+		}
+		</style>
+    </head>
+
+    <body>
+	<div class="navbar-fixed header">
+      <nav class="indigo">
+		
+		<ul id="slide-out" class="side-nav">
+			<li><a href="#!">First Sidebar Link</a></li>
+			<li><a href="#!">Second Sidebar Link</a></li>
+		</ul>
+  <a href="#" data-activates="slide-out" class="button-collapse show-on-large"><i class="tiny mdi-navigation-menu"></i></a>
+		<div class="nav-wrapper">
+			<a href="#" class="brand-logo center">Talkctor</a>
+            
+			<ul id="nav-mobile" class="right hide-on-med-and-down">
+
+			</ul>
+			</div>
+		</nav>
+	</div>
+<div class="container">
+  <ul class="collection" id="divList">
+
+  <!--  <li class="collection-item avatar">
+        <i class="mdi-editor-insert-chart circle green"></i>
+        <span class="title">Title</span>
+        <p>First Line <br>
+          Second Line
+        </p>
+        <a href="#!" class="secondary-content"><i class="play deep-purple-text text-accent-2 waves-effect waves-light medium mdi-av-pause"></i></a>
+      </li>
+      <li class='collection-item avatar'>
+        <i class='material-icons circle mdi-av-play-arrow green accent-1'></i>
+        <span class='title'>Title</span>
+        <p>First Line <br>
+          Second Line
+        </p>
+        <a href='#!' class='secondary-content'><i class='play deep-purple-text text-accent-2 waves-effect waves-light medium  mdi-av-play-arrow'></i></a>
+      </li>   -->
+    </ul>
+    </div>
+    <footer id="footer" class="page-footer deep-purple" style="display: none;">
+          <div class="container">
+            <div class="row">
+              <div class="col l6 s12" style="width:100%">
+              <i class="medium mdi-av-skip-previous white-text waves-teal" style="overflow:initial;" onclick="prev()"></i>
+              <i class="medium mdi-av-pause white-text waves-teal"  onclick="playPause()" id="playPause"></i>
+              <i class="medium mdi-av-skip-next white-text waves-teal" onclick="next()" ></i></a>
+              <i class="medium mdi-av-mic-none white-text waves-teal" sytle="float:right;"></i>
+              </div>
+              <div class="col l4 offset-l2 s12">
+                
+              </div>
+            </div>
+          </div>
+        </footer>
+        
+	  <!--Import jQuery before materialize.js-->
+      <script type="text/javascript" src="js/jquery.min.js"></script>
+      <script type="text/javascript" src="js/materialize.min.js"></script>
+	  <script type="text/javascript" src="cordova.js"></script>
+      <script type="text/javascript" >
+      
+      
+            document.addEventListener("deviceready", onDeviceReady, false);
+            
+            
+
+
+            var divListP = document.getElementById("divList");
+            var footer = document.getElementById("footer");
+            var iconoCancionActual;
+            var playPauseReproductor = document.getElementById("playPause");
+            
+            // variables globales necesarias para el funcionamiento del reproductor
+            var media = null;
+            var playing = false;
+            var lista=[];//lista de los urls de las conciones en su respectivo orden
+            var listaNombres=[];//lista de los nombres en el mismo orden
+            var actual = null;//cancion actual
+            var entry;
+
+
+            
+            
+            
+            
+            
+            function onDeviceReady() {
+                window.requestFileSystem(LocalFileSystem.PERSISTENT, 0, onFileSystemSuccess, fail);
+
+                console.log("device is ready");
+            }
+            
+            
+            
+            function fail(evt) {
+                console.log(evt.target.error.code);
+            }
+            
+           
+            
+            
+           
+            function failR(error) {
+                console.log(error.code);
+            }
+                       
+           
+            function onFileSystemSuccess(fileSystem) {
+                Materialize.toast('Succes getting songs', 500);
+                entry = fileSystem.root;
+                var directoryReader = entry.createReader();
+                directoryReader.readEntries(listarCanciones,failR);
+
+                
+
+
+               
+            }
+            
+            
+            function listarCanciones(entries) {
+                var i;
+                
+                for (i=0; i<entries.length; i++) {
+                    console.log(entries[i].name);
+                    if(entries[i].isFile){
+                        if (entries[i].name.indexOf(".mp3") != -1){
+                            divListP.innerHTML += "<li class='collection-item avatar' onclick='playNew("+i+");  Materialize.toast(\"playing\", 1000);'><i class='material-icons circle mdi-av-play-arrow blue accent-1' id='icon"+i+"'></i><span class='title truncate'>"+entries[i].name+"</span><a href='#!' class='secondary-content'></a></li>";
+                            
+                            
+                            lista[i]=(entries[i].toURL());
+                            
+                                             /*"<br>######################### <br>dir = "+
+                                                entries[i].isFile +"<br>"+ 
+                                                entries[i].toURL()+"<br>"+
+                                                entries[i].name + "<br> full path: "+ 
+                                                entries[i].fullPath;*/
+                        ;}
+                    }
+                    if (entries[i].isDirectory) {
+                         
+                         var directoryReader = entries[i].createReader();
+                         
+                         directoryReader.readEntries(listarCanciones, failR);
+                    }
+                    
+                }
+                
+            }
+            
+            function failR(error) {
+               console.log(error.code);
+                
+            }
+            
+
+          
+            function playNew(id) {
+                if (media == null){
+                     media = new Media(lista[id], playSucces, playError);
+                     footer.style.display = "block";
+                     document.getElementById('icon'+id).className = "material-icons circle mdi-editor-insert-chart circle purple accent-1"; 
+                     iconoCancionActual = document.getElementById('icon'+id);
+                     media.play();
+                     playing = true;
+                     actual = id;
+                     
+                  }
+                  
+                
+            }
+            
+            function playPause() {
+                var temp = playing;
+                if (temp == true){
+
+                    playing = false;
+                    playPauseReproductor.className = "medium mdi-av-play-arrow white-text";
+                    media.pause();
+                   
+                    
+                    
+                }
+                if (temp == false) {
+
+                    playing = true;
+                    playPauseReproductor.className = "medium mdi-av-pause white-text";
+                    media.play();
+                    
+                }
+            }
+            function stop(){
+                if (media){
+                    iconoCancionActual.className = "material-icons circle mdi-av-play-arrow blue accent-1";
+                    footer.style.display = "none";
+                    media.stop();
+                    media.release();
+                    media = null;
+                }
+                else{
+
+                }            
+            }
+            
+            function playSucces() {logP.innerHTML += "<br>funciona play";}
+            function playError(error) {logP.innerHTML += "<br>error --> "+ error.code;}  
+            
+            
+            function next(){
+                actual = actual + 1;
+                stop()
+                playNew(actual);
+            }
+            function prev(){
+                actual = actual - 1;
+                stop();
+                playNew(actual);
+            }
+      
+    </script>
+    
+    <script>
+		   $(".button-collapse").sideNav();
+		   // Show sideNav
+			$(window).scroll(
+			    {
+			        previousTop: 0
+			    }, 
+			    function () {
+			    var currentTop = $(window).scrollTop();
+			    if (currentTop < this.previousTop) {
+			        $(".sidebar em").text("Up");
+			        $(".header").show();
+			    } else {
+			        $(".sidebar em").text("Down");
+			        $(".header").hide();
+			    }
+			    this.previousTop = currentTop;
+			});		   
+	  </script>
+    </body>
+  </html>
